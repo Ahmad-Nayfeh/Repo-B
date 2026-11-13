@@ -57,3 +57,13 @@ Each entry: date, decision, reasoning, alternatives rejected, how to reverse.
 - **v1 identity is self-declared per debate; no per-person signatures.** Reason: every link holder can already write (trust model = link); signatures add key-transfer UX across devices for little v1 gain. Disclosed in privacy note; ROADMAP item. Rejected for v1: per-person ECDSA keys with transfer links.
 - **Preact + signals, no CRDT, @noble crypto only.** Reason: JS budget ≤ 150 KiB gzip (SYN §5). Rejected: React (size), Automerge (size), Yjs (unneeded).
 - **Nostr transport lazy-loaded; tests use a local mock relay only.** Reason: first-load budget; tests must never write to public relays.
+
+## D-012 · 2026-11-13 · Design revised after independent design review (Phase 3 exit)
+- Review: `docs/design/REVIEW-design.md` — 4 Critical, 16 Important, 7 Minor findings + 5 web-checked assumptions. All resolved in PRD v1.1 / ARCHITECTURE v1.1 (table in PRD §11).
+- **Biggest changes:** single validity+obligation matrix (PRD §3.3–3.4) with dead/moot rules and per-target counting; iOS paste-link path (installed PWA has separate storage); update links carry no key; encrypted `.txt` backup by default; **every event signed by a per-person key** (reverses the "no signatures in v1" part of D-011 — fabricated statements under a real name are a serious risk in faith debates); fixed relay list re-tested with kind 4333 (TECH-54).
+- **Disagreed with reviewer (partly):** kept `refute` and `ask_source` in v1-should (cheap in the model, core munazara moves the owner values); kept the "only questioning" option with neutral wording (a pure sceptic is a legitimate position; "your move" keeps symmetry).
+- **Cut to ROADMAP:** retype after replies, grant_arg, granted_irrelevant, counter forms, fallacy tags, auto-linking, commitments view, Markdown export, editable relays, full anti-entropy.
+
+## D-013 · 2026-11-13 · Deploy from the working branch; Pages enablement is an owner click
+- Default branch is `claude/new-session-1cdurq` (only branch). The Pages workflow deploys from it (and from `main` if it is created later). `configure-pages` enablement needs a non-default token, so the one-time setting is in `NEEDS-AHMAD.md` §1.
+- No `main` branch created: the session may push only to its working branch. Reverse: create `main` from this branch and change the default branch.

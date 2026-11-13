@@ -2,7 +2,7 @@
 
 > First file any session reads. Kept current at all times.
 
-**Current phase:** Phase 3 — design (PRD, ARCHITECTURE)
+**Current phase:** Phase 4 — build (core loop first)
 **Last updated:** 2026-11-13
 
 ## Done

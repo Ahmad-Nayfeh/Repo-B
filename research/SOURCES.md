@@ -371,3 +371,7 @@ All accessed 2026-11-13 unless noted.
 **[VOICE-31]** Audio messages — WhatsApp Business Platform (Meta for Developers), accessed Nov 2026 — https://developers.facebook.com/documentation/business-messaging/whatsapp/messages/audio-messages — Voice messages require `.ogg` files with the OPUS codec, mono; 16 MB limit.
 
 **[VOICE-32]** Voice message transcripts (WhatsApp Help Center) — WhatsApp, accessed Nov 2026 — https://faq.whatsapp.com/241617298315321 — Only the line "only available on certain devices and may not be available to you yet" was retrievable; no language list was visible.
+
+## Added after Phase 3 design review
+
+**[TECH-54]** Own experiment — kind-4333 publish/read-back test against 10 public Nostr relays, 2026-11-13, one cloud sandbox, throwaway key, dummy content (script: `scripts/relay-smoke.mjs`) — Accepted and read back: relay.primal.net, relay.snort.social, offchain.pub, nostr.oxtr.dev, relay.nostr.net. Accepted, no read-back from sandbox: relay.damus.io. No response: nos.lol, nostr.mom. Refused: nostr.wine (403), relay.mostr.pub (301). Supports ARCHITECTURE §6.2 default relay list. One moment, one location — not a retention measurement.
