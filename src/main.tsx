@@ -11,7 +11,7 @@ async function start() {
   initSync();
   await refreshList();
   render(<App />, document.getElementById('app')!);
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  if ('serviceWorker' in navigator && window.isSecureContext) {
     navigator.serviceWorker.register('./sw.js').catch(() => { /* offline support unavailable */ });
   }
 }
