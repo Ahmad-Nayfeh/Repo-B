@@ -45,3 +45,8 @@ Each entry: date, decision, reasoning, alternatives rejected, how to reverse.
 
 ## D-009 · 2026-11-13 · Phase 1 exit passed
 - Independent review found 2 Critical, 6 Important, 9 Minor issues; all resolved in `research/SYNTHESIS.md` §10. Six key sources were spot-checked by the reviewer and confirmed.
+
+## D-010 · 2026-11-13 · Seven departments (Phase 2)
+- **Decision:** Argumentation & Domain; Product & UX (incl. visual); Arabic Language & Localisation; Engineering; Privacy & Security; QC (incl. testing); QA & Release. Charters in `docs/org/`.
+- **Reasoning:** each maps to a distinct failure mode found in research (model fidelity/fairness; mobile usability; Arabic-first; feasibility; privacy; conformance; usefulness).
+- **Rejected:** separate R&D, Visual Design, Testing, Release departments (merged; see `docs/org/README.md`). Merging keeps gates real instead of theatrical for a one-lead team.
