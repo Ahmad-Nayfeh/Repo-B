@@ -67,3 +67,20 @@ Each entry: date, decision, reasoning, alternatives rejected, how to reverse.
 ## D-013 · 2026-11-13 · Deploy from the working branch; Pages enablement is an owner click
 - Default branch is `claude/new-session-1cdurq` (only branch). The Pages workflow deploys from it (and from `main` if it is created later). `configure-pages` enablement needs a non-default token, so the one-time setting is in `NEEDS-AHMAD.md` §1.
 - No `main` branch created: the session may push only to its working branch. Reverse: create `main` from this branch and change the default branch.
+
+## D-014 · 2026-11-13 · Security hardening after independent review (scope change: plain-JSON import removed)
+- **What changed:** strict validation at ingest; content-addressed event ids (node id = event id); debate id bound to creator; invite links must match the stored secret; identity links verified and confirmed; decompression cap; key-fingerprint suffixes for duplicate names; titles removed from share texts and file names; explicit sync-mode choice; Actions pinned to SHAs. Details: `docs/qa/SECURITY-RESOLUTION.md`.
+- **Scope change:** importing a plain JSON export is no longer possible. Evidence: S1 — it let anyone who knew a debate id inject events without the key. Export stays (ownership); restore uses the encrypted `.txt` backup.
+- **Rejected:** keeping JSON import behind a warning (a warning does not stop a crafted file sent by someone else).
+
+## D-015 · 2026-11-13 · Obligation rules refined after hands-on QA (changes PRD §3.4)
+- A challenger's own challenges on a node lapse when they later concede that node (Q1); challenge states are recursive, so a closed challenge on an answer hands the move back (Q2); answers need ≥ 2 letters/digits (Q3).
+- Evidence: `docs/qa/QA-REVIEW.md` Q1–Q3, reproduced in unit fixtures before fixing.
+- Reverse: rules live in `src/model/derive.ts` `computeChallenge`.
+
+## D-016 · 2026-11-13 · README with recorded demo (owner request mid-session)
+- The owner asked for a professional README with pictures and video, ready immediately. Demo is recorded from the real app by `tests/e2e/demo-video.spec.ts` (two browser contexts) and composed with ffmpeg; screenshots by `tests/e2e/screenshots.spec.ts`. Both regenerate on demand, so the README stays truthful as the UI changes.
+- GIF for inline playback on GitHub (MP4 linked), because committed MP4 files are not played inline in READMEs.
+
+## D-017 · 2026-11-13 · Pages workflow deploys only when Pages is enabled
+- Until the owner flips the one setting, every push produced a failed deploy (red ✗) — misleading to visitors. The workflow now builds and tests always, deploys only if the Pages API reports the site enabled, and always on a manual run.
