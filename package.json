@@ -1,0 +1,34 @@
+{
+  "name": "munazara",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Arabic-first structured debate site (مناظرة)",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "playwright test --trace off",
+    "size": "node scripts/size-check.mjs",
+    "check:strings": "node scripts/check-strings.mjs"
+  },
+  "dependencies": {
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@preact/signals": "^2.11.4",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@preact/preset-vite": "^2.10.6",
+    "@types/ws": "^8.18.2",
+    "fake-indexeddb": "^6.2.8",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0",
+    "ws": "^8.23.0"
+  }
+}
