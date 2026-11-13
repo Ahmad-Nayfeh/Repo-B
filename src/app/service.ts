@@ -75,7 +75,7 @@ function keysFor(r: DebateRecord): Promise<RoomKeys> {
 export async function openDebate(id: string, markSeen = true): Promise<Loaded | null> {
   const record = await db.getDebate(id);
   if (!record) { current.value = null; return null; }
-  if (markSeen && (!current.value || current.value.record.id !== id)) {
+  if (markSeen) {
     record.prevSeenAt = record.lastSeenAt;
     record.lastSeenAt = Date.now();
     await db.putDebate(record);

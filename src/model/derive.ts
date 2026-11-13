@@ -160,43 +160,67 @@ function computeStatuses(s: DebateState) {
   };
   const latestBy = (arr: DNode[]) => arr.reduce<DNode | undefined>((m, x) => (!m || cmp(x, m) > 0 ? x : m), undefined);
 
-  // challenges ----------------------------------------------------------------------
-  for (const c of s.nodes.values()) {
-    if (!c.parentId) continue;
+  // challenges (recursive: a challenge's state can depend on the state of the challenge made
+  // against its answer — QA review Q2) ------------------------------------------------------
+  const ACTIVE: ReadonlySet<string> = new Set(['open', 'answered', 'proposal', 'challenged']);
+  const memo = new Map<string, ChallengeInfo | null>();
+  const info = (c: DNode): ChallengeInfo | null => {
+    if (memo.has(c.id)) return memo.get(c.id)!;
+    memo.set(c.id, null);
+    const r = computeChallenge(c);
+    memo.set(c.id, r);
+    return r;
+  };
+  /** X conceded T after making challenge c → c lapses (QA review Q1). A later challenge still counts (D4). */
+  const concededLater = (t: DNode, X: string, after: number) =>
+    kids(t).some((k) => k.authorId === X && k.move === 'concede' && live(k) && k.at > after);
+  /** Combined state of X's reactions (challenges) on node `on`: active / agreed / closed / none. */
+  const reactionState = (on: DNode, X: string): 'active' | 'agreed' | 'closed' | 'none' => {
+    const rs = kids(on).filter((k) => k.authorId === X && live(k) && (CHALLENGES.has(k.move) || k.move === 'counter'));
+    if (!rs.length) return 'none';
+    const st = rs.map((k) => info(k)?.state);
+    if (st.some((x) => x && ACTIVE.has(x))) return 'active';
+    if (st.some((x) => x === 'agreed')) return 'agreed';
+    return 'closed';
+  };
+  function computeChallenge(c: DNode): ChallengeInfo | null {
+    if (!c.parentId) return null;
     const t = N(c.parentId);
     const X = c.authorId, Y = t.authorId;
-    if (c.move === 'counter') {
-      // counter K: an assertion by X that also challenges T.
-      let info: ChallengeInfo;
-      if (kids(c).some((k) => k.authorId === Y && k.move === 'concede' && live(k))) info = { state: 'conceded', challenger: X, targetAuthor: Y, targetId: t.id };
-      else if (isWithdrawn(c) || deadAssertion(t) || deadAssertion(c)) info = { state: 'moot', challenger: X, targetAuthor: Y, targetId: t.id };
-      else if (kids(c).some((k) => k.authorId === Y && (CHALLENGES.has(k.move) || k.move === 'counter') && live(k))) info = { state: 'challenged', challenger: X, targetAuthor: Y, targetId: t.id };
-      else info = { state: 'open', challenger: X, targetAuthor: Y, targetId: t.id, owes: Y };
-      s.challenges.set(c.id, info);
-      continue;
-    }
-    if (!CHALLENGES.has(c.move)) continue;
     const base = { challenger: X, targetAuthor: Y, targetId: t.id };
     const ck = kids(c);
+    if (c.move === 'counter') {
+      // counter K: an assertion by X that also challenges T.
+      if (ck.some((k) => k.authorId === Y && k.move === 'concede' && live(k))) return { state: 'conceded', ...base };
+      if (isWithdrawn(c) || deadAssertion(t) || deadAssertion(c) || concededLater(t, X, c.at)) return { state: 'moot', ...base };
+      const rs = reactionState(c, Y);
+      if (rs === 'active') return { state: 'challenged', ...base };
+      if (rs === 'agreed') return { state: 'agreed', ...base };
+      return { state: 'open', ...base, owes: Y };
+    }
+    if (!CHALLENGES.has(c.move)) return null;
     // a concession by Y is reported as such even though it also makes T dead
-    if (ck.some((k) => k.authorId === Y && k.move === 'concede' && live(k))) { s.challenges.set(c.id, { state: 'conceded', ...base }); continue; }
-    if (isWithdrawn(c) || deadAssertion(t)) { s.challenges.set(c.id, { state: 'moot', ...base }); continue; }
+    if (ck.some((k) => k.authorId === Y && k.move === 'concede' && live(k))) return { state: 'conceded', ...base };
+    if (isWithdrawn(c) || deadAssertion(t) || concededLater(t, X, c.at)) return { state: 'moot', ...base };
     const adX = latestBy(ck.filter((k) => k.authorId === X && k.move === 'agree_disagree' && live(k)));
     const adY = latestBy(ck.filter((k) => k.authorId === Y && k.move === 'agree_disagree' && live(k)));
-    if (adX && adY) { s.challenges.set(c.id, { state: 'agreed', ...base }); continue; }
+    if (adX && adY) return { state: 'agreed', ...base };
     const prop = adX ?? adY;
     if (prop) {
       const other = prop === adX ? Y : X;
-      if (!subtreeHasSubstantiveBy(c, other, prop.at)) { s.challenges.set(c.id, { state: 'proposal', ...base, yourMove: other }); continue; }
+      if (!subtreeHasSubstantiveBy(c, other, prop.at)) return { state: 'proposal', ...base, yourMove: other };
     }
     const answers = ck.filter((k) => k.authorId === Y && ANSWERS.has(k.move) && !deadAssertion(k));
     const latest = latestBy(answers);
-    if (!latest) { s.challenges.set(c.id, { state: 'open', ...base, owes: Y }); continue; }
-    const reaction = latestBy(kids(latest).filter((k) => k.authorId === X && live(k) && (k.move === 'concede' || CHALLENGES.has(k.move) || k.move === 'counter')));
-    if (reaction?.move === 'concede') s.challenges.set(c.id, { state: 'accepted', ...base, latestAnswerId: latest.id });
-    else if (reaction) s.challenges.set(c.id, { state: 'challenged', ...base, latestAnswerId: latest.id });
-    else s.challenges.set(c.id, { state: 'answered', ...base, yourMove: X, latestAnswerId: latest.id });
+    if (!latest) return { state: 'open', ...base, owes: Y };
+    const rs = reactionState(latest, X);
+    if (rs === 'active') return { state: 'challenged', ...base, latestAnswerId: latest.id };
+    if (kids(latest).some((k) => k.authorId === X && k.move === 'concede' && live(k))) return { state: 'accepted', ...base, latestAnswerId: latest.id };
+    if (rs === 'agreed') return { state: 'agreed', ...base, latestAnswerId: latest.id };
+    // no reaction, or X's challenges on the answer all closed without killing it → X's move again
+    return { state: 'answered', ...base, yourMove: X, latestAnswerId: latest.id };
   }
+  for (const c of s.nodes.values()) { const r = info(c); if (r) s.challenges.set(c.id, r); }
 
   // assertions ----------------------------------------------------------------------
   const activeOthers = (authorId: string) => [...s.people.values()].filter((p) => p.active && p.id !== authorId).map((p) => p.id);

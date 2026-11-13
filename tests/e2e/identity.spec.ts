@@ -18,10 +18,10 @@ test('identity link lets the same person write from a second device', async ({ b
   await laptop.page.goto(invite);
   await expect(laptop.page.getByRole('heading', { name: 'دعوة إلى مناظرة' })).toBeVisible();
   await laptop.page.goto(idLink);
-  await expect(laptop.page.getByText('أحمد (أنت)').first()).toBeVisible();
+  await expect(laptop.page.getByText(/أحمد\u2069* \(أنت\)/).first()).toBeVisible();
   // writes as Ahmad (own claim → default "add a reason")
   laptop.page.setDefaultTimeout(6000);
   try { await reply(laptop.page, 'دعوى من الهاتف', 'أضيف دليلاً', 'دليل مكتوب من الجهاز الثاني'); } catch (e) { await laptop.page.screenshot({ path: 'test-results/identity-fail.png' }); throw e; }
-  await expect(laptop.page.locator('article.card.focused', { hasText: 'دليل مكتوب من الجهاز الثاني' })).toContainText('أحمد (أنت)');
+  await expect(laptop.page.locator('article.card.focused', { hasText: 'دليل مكتوب من الجهاز الثاني' })).toContainText(/أحمد\u2069* \(أنت\)/);
   expect(laptop.errors).toEqual([]);
 });

@@ -18,7 +18,7 @@ test('two people run the core loop over manual links (Arabic, phone)', async ({ 
 
   // Khalid asks for proof on a premise-level claim of Ahmad
   await reply(K.page, 'العقل يستقلّ', 'ما دليلك؟', 'ما دليلك على أن كل حادث لا بد له من محدِث؟');
-  await expect(K.page.getByText('بانتظار رد أحمد').first()).toBeVisible();
+  await expect(K.page.getByText(/بانتظار رد \u2068*أحمد/).first()).toBeVisible();
   const up1 = await sendUpdate(K.page);
   expect(up1).toContain('#/u/');
   expect(up1).not.toContain(invite.split('.')[1]!); // update links carry no key (review D14)

@@ -83,6 +83,9 @@ export function Composer({ l, targetId, onClose, onPosted }: { l: Loaded; target
           </div>
           {moreOpen && <div class="chips" role="group">{opts.more.map(chip)}</div>}
           {hint && <p class="hint small">{hint}</p>}
+          {move === 'concede' && target && target.parentId === null && target.authorId !== me && (
+            <p class="hint small" dir="auto">{t('compose.concedeRoot', { name: s.people.get(target.authorId)?.name ?? '?', text: excerpt(target.text, 80) })}</p>
+          )}
           {move === 'refute' && (
             <fieldset class="choice">
               <legend class="label">{t('compose.witness')}</legend>

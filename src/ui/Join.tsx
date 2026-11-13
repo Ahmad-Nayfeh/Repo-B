@@ -19,7 +19,7 @@ export function Join({ l }: { l: Loaded }) {
   const submit = async (e: Event) => {
     e.preventDefault(); if (!name.trim() || !sync || busy) return;
     setBusy(true);
-    try { await joinAs(l.record.id, { name, standpoint: qOnly ? '' : standpoint, questionerOnly: qOnly, syncMode: sync }); go(debateHref(l.record.id), true); }
+    try { await joinAs(l.record.id, { name, standpoint: qOnly ? '' : standpoint, questionerOnly: qOnly, syncMode: sync }); go(debateHref(l.record.id) + (sync === 'manual' ? '?joined=1' : ''), true); }
     catch (err) { showToast(t('common.error', { msg: (err as Error).message })); setBusy(false); }
   };
   return (

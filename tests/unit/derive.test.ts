@@ -221,3 +221,28 @@ function summary(s: ReturnType<B['state']>) {
     ob: [...s.obligations].sort(), nodes: [...s.nodes.keys()].sort(),
   });
 }
+
+describe('QA review fixtures', () => {
+  it('Q1: conceding a claim makes the conceder\'s own earlier challenges on it lapse', () => {
+    const s = two().add('A', 'c1', null, 'claim').add('K', 'q1', 'c1', 'ask_proof').add('K', 'ok', 'c1', 'concede').state();
+    expect(s.challenges.get('q1')!.state).toBe('moot');
+    expect(s.assertions.get('c1')!.status).toBe('accepted');
+    expect(s.obligations.get('A')!.owes).toEqual([]);
+  });
+  it('Q2: a closed challenge on the answer hands the move back to the challenger', () => {
+    const s = two().add('A', 'c1', null, 'claim').add('K', 'o1', 'c1', 'object')
+      .add('A', 'r1', 'o1', 'reason').add('K', 'x1', 'r1', 'refute', { witness: 'counterexample' })
+      .add('A', 'r2', 'x1', 'reason').add('K', 'ok', 'r2', 'concede').state();
+    expect(s.challenges.get('x1')!.state).toBe('accepted');
+    expect(s.challenges.get('o1')!.state).toBe('answered');
+    expect(s.obligations.get('K')!.yourMove).toEqual(['o1']);
+  });
+  it('Q2: agreeing to disagree on the sub-challenge closes the parent challenge too', () => {
+    const s = two().add('A', 'c1', null, 'claim').add('K', 'o1', 'c1', 'object')
+      .add('A', 'r1', 'o1', 'reason').add('K', 'x1', 'r1', 'object')
+      .add('A', 'ad1', 'x1', 'agree_disagree').add('K', 'ad2', 'x1', 'agree_disagree').state();
+    expect(s.challenges.get('x1')!.state).toBe('agreed');
+    expect(s.challenges.get('o1')!.state).toBe('agreed');
+    expect(s.obligations.get('K')!.yourMove).toEqual([]);
+  });
+});

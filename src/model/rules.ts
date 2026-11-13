@@ -52,7 +52,8 @@ export function allowedMoves(parent: ParentView | null, actorId: string): Move[]
 /** Extra per-move requirements beyond the matrix. Returns an error key or null. */
 export function moveRequirementError(move: Move, meta: NodeMeta | undefined, text: string, nodeExists: (id: string) => boolean): string | null {
   const needsText = move !== 'concede' && move !== 'withdraw' && move !== 'agree_disagree';
-  if (needsText && text.trim().length === 0) return 'empty_text';
+  // at least two letters or digits, so '.' cannot discharge an obligation (QA review Q3)
+  if (needsText && (text.match(/[\p{L}\p{N}]/gu)?.length ?? 0) < 2) return 'empty_text';
   if (text.length > 5000) return 'too_long';
   if (move === 'refute' && meta?.witness !== 'counterexample' && meta?.witness !== 'impossibility') return 'refute_needs_witness';
   if (move === 'see_also' && (!meta?.ref || !nodeExists(meta.ref))) return 'see_also_needs_ref';

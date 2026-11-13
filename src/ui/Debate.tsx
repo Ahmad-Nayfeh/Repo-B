@@ -15,7 +15,8 @@ type Tab = 'status' | 'tree' | 'terms' | 'sync';
 export function Debate({ l, tab, node }: { l: Loaded; tab: Tab; node?: string }) {
   const s = l.state;
   const [composeFor, setComposeFor] = useState<{ target: string | null } | null>(null);
-  const [justPosted, setJustPosted] = useState(false);
+  const [justPosted, setJustPosted] = useState(() => location.hash.includes('joined=1') && l.record.syncMode === 'manual');
+  const joined = location.hash.includes('joined=1');
   const title = s.title || l.record.title;
   const tabs: Array<[Tab, string, string]> = [
     ['status', t('debate.tabStatus'), debateHref(l.record.id)],
@@ -26,7 +27,7 @@ export function Debate({ l, tab, node }: { l: Loaded; tab: Tab; node?: string })
   const onPosted = () => { setComposeFor(null); setJustPosted(true); };
   return (
     <div class="page">
-      <TopBar title={title} back="#/" />
+      <TopBar title={title} back={tab === 'tree' && node ? upHref(l, node) : '#/'} />
       <nav class="tabs" role="tablist">
         {tabs.map(([k, label, href]) => (
           <a key={k} role="tab" aria-selected={tab === k} class={`tab ${tab === k ? 'active' : ''}`} href={href}>{label}</a>
@@ -37,7 +38,7 @@ export function Debate({ l, tab, node }: { l: Loaded; tab: Tab; node?: string })
           <div class="notice"><span>{t('debate.notJoined')}</span> <a class="btn small" href={debateHref(l.record.id, 'join')}>{t('debate.joinNow')}</a></div>
         )}
         {s.ignored > 0 && <p class="muted small">{t('debate.ignoredEvents', { n: s.ignored })}</p>}
-        {justPosted && <PostedBar l={l} onClose={() => setJustPosted(false)} />}
+        {justPosted && <PostedBar l={l} joined={joined} onClose={() => setJustPosted(false)} />}
         {tab === 'status' && <StatusTab l={l} />}
         {tab === 'tree' && <TreeTab l={l} focusId={node} onReply={(target) => setComposeFor({ target })} />}
         {tab === 'terms' && <TermsTab l={l} />}
@@ -50,7 +51,12 @@ export function Debate({ l, tab, node }: { l: Loaded; tab: Tab; node?: string })
   );
 }
 
-function PostedBar({ l, onClose }: { l: Loaded; onClose: () => void }) {
+function upHref(l: Loaded, nodeId: string): string {
+  const parent = l.state.nodes.get(nodeId)?.parentId;
+  return parent ? debateHref(l.record.id, 't', parent) : debateHref(l.record.id, 't');
+}
+
+function PostedBar({ l, onClose, joined }: { l: Loaded; onClose: () => void; joined?: boolean }) {
   const nudge = async () => {
     const r = await shareOrCopy({ text: t('debate.nudgeText', { title: l.state.title }) });
     if (r === 'copied') showToast(t('common.copied'));
@@ -62,6 +68,7 @@ function PostedBar({ l, onClose }: { l: Loaded; onClose: () => void }) {
   };
   return (
     <div class="posted-bar" role="status">
+      {joined && <span class="small">{t('debate.joinedTell')}</span>}
       {l.record.syncMode === 'manual'
         ? <button type="button" class="btn primary" onClick={send}><Icon name="share" />{t('debate.sendUpdate')}</button>
         : <button type="button" class="btn primary" onClick={nudge}><Icon name="share" />{t('debate.nudge')}</button>}
@@ -74,7 +81,6 @@ function PostedBar({ l, onClose }: { l: Loaded; onClose: () => void }) {
 function StatusTab({ l }: { l: Loaded }) {
   const s = l.state;
   const [showAll, setShowAll] = useState(false);
-  const [q, setQ] = useState('');
   useEffect(() => { void markBannerSeen(); }, []);
   const people = [...s.people.values()].sort((a, b) => a.joinOrder - b.joinOrder);
   const names = listNames(people.map((p) => p.name));
@@ -91,11 +97,6 @@ function StatusTab({ l }: { l: Loaded }) {
     }
     return { open, answered, closed };
   }, [s]);
-  const results = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    if (needle.length < 2) return null;
-    return [...s.nodes.values()].filter((n) => n.text.toLowerCase().includes(needle)).slice(0, 30);
-  }, [s, q]);
   const shown = showAll ? items : items.slice(0, 3);
   return (
     <>
@@ -127,7 +128,7 @@ function StatusTab({ l }: { l: Loaded }) {
               <li key={n.id}>
                 <a class="fresh-item" href={debateHref(l.record.id, 't', n.id)}>
                   <span class="move-badge">{moveLabel(n.move)}</span>
-                  <span dir="auto">{excerpt(n.text || moveLabel(n.move), 100)}</span>
+                  <span dir="auto">{n.text ? excerpt(n.text, 100) : t('stance.on', { text: excerpt(n.parentId ? s.nodes.get(n.parentId)?.text ?? '' : '', 80) })}</span>
                   <span class="muted small">{personName(s, n.authorId, l.me)} · {ago(n.at)}</span>
                 </a>
               </li>
@@ -171,17 +172,7 @@ function StatusTab({ l }: { l: Loaded }) {
         </ul>
       </section>
 
-      <section>
-        <label class="label" for="search"><Icon name="search" /> {t('debate.search')}</label>
-        <input id="search" class="input" type="search" dir="auto" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} />
-        {results && (results.length === 0 ? <p class="muted">{t('debate.searchNone')}</p> : (
-          <ul class="plain">
-            {results.map((n) => (
-              <li key={n.id}><a class="fresh-item" href={debateHref(l.record.id, 't', n.id)}><span class="move-badge">{moveLabel(n.move)}</span><span dir="auto">{excerpt(n.text, 110)}</span></a></li>
-            ))}
-          </ul>
-        ))}
-      </section>
+      <SearchBox l={l} />
     </>
   );
 }
@@ -203,6 +194,29 @@ function waitingItems(s: DebateState, me: string | null): WaitItem[] {
     out.push({ key: `m${cid}`, kind: 'move', focus, text: n.text || moveLabel(n.move), by: n.authorId, at: n.at });
   }
   return out.sort((a, b) => a.at - b.at);
+}
+
+function SearchBox({ l }: { l: Loaded }) {
+  const s = l.state;
+  const [q, setQ] = useState('');
+  const results = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (needle.length < 2) return null;
+    return [...s.nodes.values()].filter((n) => n.text.toLowerCase().includes(needle)).slice(0, 30);
+  }, [s, q]);
+  return (
+    <section>
+      <label class="label" for="search"><Icon name="search" /> {t('debate.search')}</label>
+      <input id="search" class="input" type="search" dir="auto" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} />
+      {results && (results.length === 0 ? <p class="muted">{t('debate.searchNone')}</p> : (
+        <ul class="plain">
+          {results.map((n) => (
+            <li key={n.id}><a class="fresh-item" href={debateHref(l.record.id, 't', n.id)}><span class="move-badge">{moveLabel(n.move)}</span><span dir="auto">{excerpt(n.text, 110)}</span></a></li>
+          ))}
+        </ul>
+      ))}
+    </section>
+  );
 }
 
 // ---- Tree tab ----------------------------------------------------------------------------------
@@ -262,6 +276,7 @@ function TreeTab({ l, focusId, onReply }: { l: Loaded; focusId?: string; onReply
       {!focus && l.me && (
         <button type="button" class="btn block" onClick={() => onReply(null)}><Icon name="plus" />{t('debate.addStandpoint')}</button>
       )}
+      {!focus && <SearchBox l={l} />}
     </>
   );
 }
@@ -296,6 +311,7 @@ export function NodeCard({ l, n, focused, onReply }: { l: Loaded; n: DNode; focu
         <span class="muted small">{ago(n.at)}</span>
       </div>
       {n.text && <p class={`card-text ${focused ? '' : 'clamp'}`} dir="auto">{n.text}</p>}
+      {!n.text && n.parentId && <p class="muted small" dir="auto">{t('stance.on', { text: excerpt(s.nodes.get(n.parentId)?.text || moveLabel(s.nodes.get(n.parentId)!.move), 90) })}</p>}
       {n.meta.origin === 'citation' && <p class="muted small">{t('compose.citation')}</p>}
       {n.meta.witness && <p class="muted small">{t(`compose.witness.${n.meta.witness}`)}</p>}
       {ref && <p class="small">→ <a href={debateHref(l.record.id, 't', ref.id)} dir="auto">{excerpt(ref.text, 60)}</a></p>}

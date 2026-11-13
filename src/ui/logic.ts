@@ -8,8 +8,8 @@ export type Tone = 'owe' | 'move' | 'open' | 'closed' | 'accepted' | 'neutral' |
 export function personName(s: DebateState, id: string | undefined, me: string | null): string {
   if (!id) return '?';
   const p = s.people.get(id);
-  const n = p?.name ?? '?';
-  return id === me ? `${n} (${t('common.you')})` : n;
+  const n = `\u2068${p?.name ?? '?'}\u2069`; // first-strong isolate: names never scramble mixed-direction text (QA Q8)
+  return id === me ? `\u2068${n} (${t('common.you')})\u2069` : n;
 }
 
 export interface Chip { tone: Tone; text: string }
@@ -151,7 +151,7 @@ export const CITABLE = (m: Move) => m === 'claim' || m === 'reason' || m === 'co
 export function groupOf(n: DNode, parent?: DNode): 'assert' | 'challenge' | 'answer' | 'stance' {
   if (CHALLENGES.has(n.move) || n.move === 'counter') return 'challenge';
   if (parent && CHALLENGES.has(parent.originalMove) && ANSWERS.has(n.move)) return 'answer';
-  if (n.move === 'reason' || n.move === 'define') return 'assert';
+  if (n.move === 'reason' || n.move === 'define' || n.move === 'claim') return 'assert';
   if (ASSERTIONS.has(n.move)) return 'answer';
   return 'stance';
 }
