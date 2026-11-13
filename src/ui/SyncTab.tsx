@@ -3,6 +3,7 @@ import { backupFile, identityLink, importFileText, inviteLink, makeUpdate, plain
 import { go } from '../app/router';
 import { ago, t } from '../i18n';
 import { relayStatus, syncNow } from '../sync/engine';
+import { errorText } from './LinkHandler';
 import { Icon, readFileText, shareFile, shareOrCopy } from './common';
 
 export function SyncTab({ l }: { l: Loaded }) {
@@ -25,9 +26,9 @@ export function SyncTab({ l }: { l: Loaded }) {
   const backup = async () => { const f = await backupFile(); await shareFile(f.name, f.text); };
   const exportPlain = async () => { if (!confirm(t('sync.exportPlainWarn'))) return; const f = plainExport(); await shareFile(f.name, f.text, 'application/json'); };
   const importF = async () => {
-    const text = await readFileText('.txt,.json,text/plain,application/json'); if (!text) return;
+    const text = await readFileText('.txt,text/plain'); if (!text) return;
     try { const res = await importFileText(text); showToast(t('sync.imported', { n: res.added })); }
-    catch (e) { showToast((e as Error).message === 'need_invite' ? t('sync.needInviteFirst') : t('common.error', { msg: (e as Error).message })); }
+    catch (e) { showToast(errorText((e as Error).message)); }
   };
   const shareIdentity = async () => {
     if (!confirm(t('sync.identityWarn'))) return;

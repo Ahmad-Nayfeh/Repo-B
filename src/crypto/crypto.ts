@@ -1,5 +1,6 @@
 // WebCrypto helpers (ARCHITECTURE §4). No third-party crypto here; Nostr signing lives in sync/nostr.ts.
 import type { DebateEvent } from '../model/types';
+import { isWellFormedEvent, LIMITS } from '../model/validate';
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -43,7 +44,22 @@ async function pipe(data: Uint8Array, stream: CompressionStream | DecompressionS
   return new Uint8Array(await out.arrayBuffer());
 }
 export const deflate = (d: Uint8Array) => pipe(d, new CompressionStream('deflate-raw'));
-export const inflate = (d: Uint8Array) => pipe(d, new DecompressionStream('deflate-raw'));
+/** Max decompressed size accepted from any payload (security review S7). */
+export const MAX_INFLATED = 32 * 1024 * 1024;
+export async function inflate(d: Uint8Array, max = MAX_INFLATED): Promise<Uint8Array> {
+  const reader = new Blob([buf(d)]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+  const chunks: Uint8Array[] = []; let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > max) { await reader.cancel(); throw new Error('payload_too_large'); }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total); let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
+}
 
 // ---- symmetric encryption -----------------------------------------------------------
 /** Encrypts JSON-serialisable data: deflate → AES-GCM (fresh 96-bit IV) → iv||ct. */
@@ -121,6 +137,20 @@ export async function verifyEvent(e: DebateEvent, pub: string): Promise<boolean>
   } catch { return false; }
 }
 
+const sha = async (s: string) => new Uint8Array(await subtle().digest('SHA-256', buf(enc.encode(s))));
+
+/** Content-addressed event id (security review S4): hash of the event without id, sig and node.id. */
+export async function computeEventId(e: DebateEvent): Promise<string> {
+  const { id: _i, sig: _s, ...rest } = e as DebateEvent & { sig?: string };
+  const body: Record<string, unknown> = { ...rest };
+  if (e.type === 'node.add') body.node = { ...e.node, id: undefined };
+  return b64url((await sha(stableStringify(body))).subarray(0, 16));
+}
+/** A debate id is bound to its creator (security review S5): hash(creatorPersonId:salt). */
+export async function debateIdFor(personId: string, salt: string): Promise<string> {
+  return b64url((await sha(`munazara-debate:${personId}:${salt}`)).subarray(0, 16));
+}
+
 /**
  * Filters a batch to events whose signatures verify. `knownPubs` maps personId → pub for people
  * already accepted locally; joins in the batch are self-verified and then extend the map.
@@ -128,16 +158,31 @@ export async function verifyEvent(e: DebateEvent, pub: string): Promise<boolean>
 export async function verifyBatch(events: DebateEvent[], knownPubs: Map<string, string>): Promise<DebateEvent[]> {
   const pubs = new Map(knownPubs);
   const out: DebateEvent[] = [];
-  for (const e of events) {
-    if (e.type !== 'person.join') continue;
-    if (e.authorId !== await personIdFromPub(e.pub)) continue; // id must be bound to the key
-    if (!(await verifyEvent(e, e.pub))) continue;
-    pubs.set(e.authorId, e.pub); out.push(e);
+  // shape + content-addressed id first; anything malformed is dropped, never thrown (S2, S6)
+  const candidates: DebateEvent[] = [];
+  for (const e of events.slice(0, LIMITS.eventsPerBatch)) {
+    try {
+      if (!isWellFormedEvent(e)) continue;
+      if (e.id !== await computeEventId(e)) continue;
+      if (e.type === 'debate.create' && e.debateId !== await debateIdFor(e.authorId, (e as { salt?: string }).salt ?? '')) continue;
+      candidates.push(e);
+    } catch { /* drop */ }
   }
-  for (const e of events) {
+  for (const e of candidates) {
+    if (e.type !== 'person.join') continue;
+    try {
+      if (e.authorId !== await personIdFromPub(e.pub)) continue; // id must be bound to the key
+      if (!(await verifyEvent(e, e.pub))) continue;
+      if (!pubs.has(e.authorId)) pubs.set(e.authorId, e.pub);
+      out.push(e);
+    } catch { /* drop */ }
+  }
+  for (const e of candidates) {
     if (e.type === 'person.join') continue;
-    const pub = pubs.get(e.authorId);
-    if (pub && await verifyEvent(e, pub)) out.push(e);
+    try {
+      const pub = pubs.get(e.authorId);
+      if (pub && await verifyEvent(e, pub)) out.push(e);
+    } catch { /* drop */ }
   }
   return out;
 }

@@ -301,7 +301,7 @@ export function NodeCard({ l, n, focused, onReply }: { l: Loaded; n: DNode; focu
       {ref && <p class="small">→ <a href={debateHref(l.record.id, 't', ref.id)} dir="auto">{excerpt(ref.text, 60)}</a></p>}
       <div class="card-foot">
         {chip && <StatusChip {...chip} />}
-        {n.editedAfterReply && <span class="pill">{t('common.editedAfterReply')}</span>}
+        {n.editedAfterReply ? <span class="pill">{t('common.editedAfterReply')}</span> : n.versions.length > 1 && <span class="pill">{t('common.edited')}</span>}
         {!focused && n.children.length > 0 && <span class="muted small">{t('tree.replies', { n: n.children.length })}</span>}
         {!focused && openBelow > 0 && <span class="pill pill-open">{t('tree.openBelow', { n: openBelow })}</span>}
       </div>

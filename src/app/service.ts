@@ -1,8 +1,8 @@
 // Application service: state signals + actions. All incoming events pass signature verification.
 import { batch, signal } from '@preact/signals';
 import {
-  b64url, deriveRoomKeys, fromB64url, newIdentity, randomBytes, randomId, signEvent, verifyBatch,
-  type Identity, type RoomKeys,
+  b64url, computeEventId, debateIdFor, deriveRoomKeys, fromB64url, newIdentity, personIdFromPub, randomBytes, randomId,
+  signEvent, verifyBatch, verifyEvent, type Identity, type RoomKeys,
 } from '../crypto/crypto';
 import { digits, lang } from '../i18n';
 import { derive } from '../model/derive';
@@ -57,7 +57,10 @@ export async function saveSettings(patch: Partial<Settings>) {
 export async function refreshList() {
   const recs = await db.listDebates();
   const out = [];
-  for (const r of recs) out.push({ record: r, state: derive(r.id, await db.getEvents(r.id)) });
+  for (const r of recs) {
+    try { out.push({ record: r, state: derive(r.id, await db.getEvents(r.id)) }); }
+    catch (e) { console.warn('debate could not be loaded', r.id, e); } // never take the whole app down (S2)
+  }
   out.sort((a, b) => b.record.updatedAt - a.record.updatedAt);
   debates.value = out;
 }
@@ -82,7 +85,8 @@ export async function openDebate(id: string, markSeen = true): Promise<Loaded | 
 
 async function reload(record: DebateRecord): Promise<Loaded> {
   const events = await db.getEvents(record.id);
-  const state = derive(record.id, events);
+  let state: DebateState;
+  try { state = derive(record.id, events); } catch { state = derive(record.id, []); }
   const me = record.identity && state.people.has(record.identity.personId) ? record.identity.personId : null;
   const l: Loaded = { record, events, state, keys: await keysFor(record), me };
   current.value = l;
@@ -114,7 +118,9 @@ export async function ingest(debateId: string, incoming: DebateEvent[], local = 
 async function emit(record: DebateRecord, identity: Identity, partials: Array<Omit<DebateEvent, 'id' | 'debateId' | 'authorId' | 'at' | 'v' | 'sig'>>) {
   const signed: DebateEvent[] = [];
   for (const p of partials) {
-    const e = { ...p, id: randomId(), debateId: record.id, authorId: identity.personId, at: now(), v: 1 } as DebateEvent;
+    const e = { ...p, id: '', debateId: record.id, authorId: identity.personId, at: now(), v: 1 } as DebateEvent;
+    e.id = await computeEventId(e);                 // content-addressed (S4)
+    if (e.type === 'node.add') e.node = { ...e.node, id: e.id }; // node id = event id
     signed.push(await signEvent(e, identity));
   }
   const added = await db.addEvents(signed);
@@ -124,9 +130,10 @@ async function emit(record: DebateRecord, identity: Identity, partials: Array<Om
 
 // ---- create / join --------------------------------------------------------------------------
 export async function createDebate(o: { title: string; name: string; standpoint: string; syncMode: SyncMode }): Promise<string> {
-  const id = randomId();
   const secret = randomBytes(32);
   const identity = await newIdentity();
+  const salt = randomId();
+  const id = await debateIdFor(identity.personId, salt); // bound to the creator (S5)
   const t = Date.now();
   const record: DebateRecord = {
     id, title: o.title.trim(), secret: b64url(secret), identity, syncMode: o.syncMode,
@@ -134,9 +141,9 @@ export async function createDebate(o: { title: string; name: string; standpoint:
   };
   await db.putDebate(record);
   await emit(record, identity, [
-    { type: 'debate.create', title: o.title.trim(), lang: lang.value } as never,
+    { type: 'debate.create', title: o.title.trim(), lang: lang.value, salt } as never,
     { type: 'person.join', name: o.name.trim(), pub: identity.pub } as never,
-    { type: 'node.add', node: { id: randomId(), parentId: null, move: 'claim', text: o.standpoint.trim() } } as never,
+    { type: 'node.add', node: { id: '', parentId: null, move: 'claim', text: o.standpoint.trim() } } as never,
   ]);
   void requestPersist();
   return id;
@@ -145,6 +152,8 @@ export async function createDebate(o: { title: string; name: string; standpoint:
 /** Opens an invite link: stores the debate (if new) and merges its snapshot. Returns debate id. */
 export async function acceptJoinLink(p: Extract<ParsedLink, { kind: 'join' }>): Promise<string> {
   let record = await db.getDebate(p.debateId);
+  // an invite for a debate we already have must carry the same secret (S1)
+  if (record && record.secret !== b64url(p.secret)) throw new Error('secret_mismatch');
   const keys = await deriveRoomKeys(p.secret);
   let snapshot: DebateEvent[] = [];
   if (p.snapshot) {
@@ -168,7 +177,7 @@ export async function joinAs(debateId: string, o: { name: string; standpoint?: s
   if (o.syncMode) record.syncMode = o.syncMode;
   record.bannerSeen = true;
   const partials: Array<never> = [{ type: 'person.join', name: o.name.trim(), pub: identity.pub, questionerOnly: o.questionerOnly } as never];
-  if (o.standpoint?.trim()) partials.push({ type: 'node.add', node: { id: randomId(), parentId: null, move: 'claim', text: o.standpoint.trim() } } as never);
+  if (o.standpoint?.trim()) partials.push({ type: 'node.add', node: { id: '', parentId: null, move: 'claim', text: o.standpoint.trim() } } as never);
   await emit(record, identity, partials);
   void requestPersist();
 }
@@ -176,10 +185,11 @@ export async function joinAs(debateId: string, o: { name: string; standpoint?: s
 // ---- moves ----------------------------------------------------------------------------------
 export async function addMove(parentId: string | null, move: Move, text: string, meta?: NodeMeta): Promise<string> {
   const l = current.value!;
-  const nodeId = randomId();
   const clean: NodeMeta | undefined = meta && Object.keys(meta).length ? meta : undefined;
-  await emit(l.record, l.record.identity!, [{ type: 'node.add', node: { id: nodeId, parentId, move, text: text.trim(), meta: clean } } as never]);
-  return nodeId;
+  const node: Record<string, unknown> = { id: '', parentId, move, text: text.trim() };
+  if (clean) node.meta = clean;
+  const [e] = await emit(l.record, l.record.identity!, [{ type: 'node.add', node } as never]);
+  return e!.id;
 }
 export async function editNode(nodeId: string, text: string) {
   const l = current.value!;
@@ -229,8 +239,8 @@ export async function backupFile(): Promise<{ name: string; text: string }> {
   const l = current.value!;
   const text = await makeBackupText(l.record.id, l.state.title, l.keys.encKey, l.events);
   await patchRecord(l.record.id, { lastBackupAt: Date.now() });
-  const safe = (l.state.title || 'debate').replace(/[\\/:*?"<>|#]+/g, ' ').slice(0, 40).trim();
-  return { name: `مناظرة - ${safe}.txt`, text };
+  // no title in the file name: titles can be sensitive (S8)
+  return { name: `munazara-backup-${new Date().toISOString().slice(0, 10)}.txt`, text };
 }
 
 export function plainExport(): { name: string; text: string } {
@@ -247,12 +257,22 @@ export async function acceptUpdatePayload(debateId: string, payload: string): Pr
   return ingest(debateId, Array.isArray(events) ? events : []);
 }
 
-export async function acceptIdentityPayload(debateId: string, payload: string): Promise<string> {
+export async function acceptIdentityPayload(debateId: string, payload: string, confirmSwitch: (name: string) => boolean): Promise<string> {
   const record = await db.getDebate(debateId);
   if (!record) throw new Error('need_invite');
   const { encKey } = await keysFor(record);
   const id = await openPayload<Identity>(encKey, payload);
-  if (!id?.personId || !id.privateJwk || !id.pub) throw new Error('bad_identity');
+  if (!id || typeof id.personId !== 'string' || typeof id.pub !== 'string' || !id.privateJwk) throw new Error('bad_identity');
+  // the id must be bound to the key, and the private key must match the public key (S3)
+  if (id.personId !== await personIdFromPub(id.pub)) throw new Error('bad_identity');
+  const probe = await signEvent({ type: 'person.rename', id: 'probeprobeprobe0', debateId, authorId: id.personId, at: 0, v: 1, name: 'x' }, id);
+  if (!(await verifyEvent(probe, id.pub))) throw new Error('bad_identity');
+  const state = derive(debateId, await db.getEvents(debateId));
+  const name = state.people.get(id.personId)?.name ?? '?';
+  if (record.identity && record.identity.personId !== id.personId) {
+    const mineIsActive = state.people.get(record.identity.personId)?.active;
+    if (mineIsActive || !confirmSwitch(name)) throw new Error('identity_kept');
+  }
   record.identity = id;
   await db.putDebate(record);
   const l = await openDebate(debateId, false);
@@ -264,15 +284,12 @@ export async function identityLink(): Promise<string> {
   return makeIdentityLink(l.record.id, l.keys.encKey, l.record.identity!);
 }
 
-/** Imports an encrypted .txt backup or a plain JSON export. Returns { debateId, added }. */
+/** Imports an encrypted .txt backup. Plain JSON is export-only: importing it would let anyone
+ *  who knows a debate id inject events without the key (security review S1). */
 export async function importFileText(text: string): Promise<{ debateId: string; added: number }> {
   const b = parseBackupText(text);
-  if (b) return { debateId: b.debateId, added: await acceptBackupPayload(b.debateId, b.payload) };
-  let parsed: unknown;
-  try { parsed = JSON.parse(text); } catch { throw new Error('unrecognised_file'); }
-  if (!isPlainExport(parsed)) throw new Error('unrecognised_file');
-  if (!(await db.getDebate(parsed.debate.id))) throw new Error('need_invite');
-  return { debateId: parsed.debate.id, added: await ingest(parsed.debate.id, parsed.events) };
+  if (!b) throw new Error('unrecognised_file');
+  return { debateId: b.debateId, added: await acceptBackupPayload(b.debateId, b.payload) };
 }
 async function acceptBackupPayload(debateId: string, payload: string): Promise<number> {
   const record = await db.getDebate(debateId);

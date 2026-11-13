@@ -52,8 +52,9 @@ export async function reply(page: Page, onText: string, action: string, text?: s
   await focusOn(page, onText);
   await page.locator('article.card.focused').getByRole('button', { name: 'ردّ' }).click();
   const sheet = page.locator('dialog.sheet[open]');
+  await expect(sheet.getByRole('button', { name: /^(إرسال|تأكيد)$/ })).toBeVisible();
   const btn = sheet.getByRole('button', { name: action, exact: true });
-  if (!(await btn.isVisible())) await sheet.getByRole('button', { name: /المزيد/ }).click();
+  if ((await btn.count()) === 0) await sheet.getByRole('button', { name: /المزيد/ }).click();
   await sheet.getByRole('button', { name: action, exact: true }).click();
   if (text) await sheet.locator('#ctext').fill(text);
   await sheet.getByRole('button', { name: /^(إرسال|تأكيد)$/ }).click();

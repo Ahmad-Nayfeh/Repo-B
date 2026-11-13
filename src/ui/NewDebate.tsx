@@ -5,7 +5,7 @@ import { t } from '../i18n';
 import type { SyncMode } from '../store/db';
 import { TopBar } from './common';
 
-export function SyncChoice({ value, onChange }: { value: SyncMode; onChange: (m: SyncMode) => void }) {
+export function SyncChoice({ value, onChange }: { value: SyncMode | null; onChange: (m: SyncMode) => void }) {
   return (
     <fieldset class="choice">
       <legend class="label">{t('new.syncTitle')}</legend>
@@ -25,13 +25,13 @@ export function NewDebate() {
   const [title, setTitle] = useState('');
   const [name, setName] = useState('');
   const [standpoint, setStandpoint] = useState('');
-  const [sync, setSync] = useState<SyncMode>('relay');
+  const [sync, setSync] = useState<SyncMode | null>(null);
   const [busy, setBusy] = useState(false);
-  const ok = title.trim() && name.trim() && standpoint.trim();
+  const ok = title.trim() && name.trim() && standpoint.trim() && sync;
   const submit = async (e: Event) => {
     e.preventDefault(); if (!ok || busy) return;
     setBusy(true);
-    try { const id = await createDebate({ title, name, standpoint, syncMode: sync }); go(debateHref(id, 'sync') + '?invite=1', true); }
+    try { const id = await createDebate({ title, name, standpoint, syncMode: sync! }); go(debateHref(id, 'sync') + '?invite=1', true); }
     catch (err) { showToast(t('common.error', { msg: (err as Error).message })); setBusy(false); }
   };
   return (

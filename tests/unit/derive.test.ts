@@ -168,9 +168,20 @@ describe('review fixtures', () => {
     expect(s.nodes.has('x3')).toBe(false);
   });
 
-  it('duplicate names are disambiguated deterministically', () => {
-    const s = new B().join('A', 'أحمد').join('A2', 'أحمد').state();
-    expect(s.people.get('A2')!.name).toBe('أحمد 2');
+  it('duplicate names are ALL marked with a key fingerprint (no first-come advantage)', () => {
+    const s = new B().join('AAAAx', 'أحمد').join('BBBBy', 'أحمد').join('K', 'خالد').state();
+    expect(s.people.get('AAAAx')!.name).toBe('أحمد ·AAAA');
+    expect(s.people.get('BBBBy')!.name).toBe('أحمد ·BBBB');
+    expect(s.people.get('K')!.name).toBe('خالد');
+  });
+  it('malformed events are skipped, never thrown on (S2)', () => {
+    const b = two().add('A', 'c1', null, 'claim');
+    b.events.push({ ...(b.events[1] as any), id: 'bad1', type: 'person.join', authorId: 'Z', name: 123 } as any);
+    b.events.push({ type: 'node.add', id: 'bad2', debateId: 'd1', authorId: 'K', at: 5, v: 1, node: { id: 'x', parentId: 'c1', move: 'object', text: { evil: 1 } } } as any);
+    b.events.push(null as any, 42 as any, { __proto__: { polluted: 1 } } as any);
+    const s = b.state();
+    expect(s.nodes.size).toBe(1);
+    expect(s.people.has('Z')).toBe(false);
   });
 });
 

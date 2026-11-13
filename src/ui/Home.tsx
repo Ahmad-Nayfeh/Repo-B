@@ -4,6 +4,7 @@ import { debateHref, go } from '../app/router';
 import { ago, fmtNum, listNames, t } from '../i18n';
 import { obligationOf } from '../model/derive';
 import { parseLink } from '../sync/links';
+import { errorText } from './LinkHandler';
 import { Icon, readFileText, TopBar } from './common';
 
 export function Home() {
@@ -16,10 +17,10 @@ export function Home() {
     go(paste.slice(paste.indexOf('#')));
   };
   const importFile = async () => {
-    const text = await readFileText('.txt,.json,text/plain,application/json');
+    const text = await readFileText('.txt,text/plain');
     if (!text) return;
     try { const r = await importFileText(text); showToast(t('sync.imported', { n: r.added })); go(debateHref(r.debateId)); }
-    catch (e) { showToast((e as Error).message === 'need_invite' ? t('sync.needInviteFirst') : t('common.error', { msg: (e as Error).message })); }
+    catch (e) { showToast(errorText((e as Error).message)); }
   };
   return (
     <div class="page">

@@ -12,12 +12,12 @@ export function Join({ l }: { l: Loaded }) {
   const [name, setName] = useState('');
   const [standpoint, setStandpoint] = useState('');
   const [qOnly, setQOnly] = useState(false);
-  const [sync, setSync] = useState<SyncMode>('relay');
+  const [sync, setSync] = useState<SyncMode | null>(null);
   const [busy, setBusy] = useState(false);
   const names = listNames([...s.people.values()].map((p) => p.name));
   const roots = s.roots.map((id) => s.nodes.get(id)!);
   const submit = async (e: Event) => {
-    e.preventDefault(); if (!name.trim() || busy) return;
+    e.preventDefault(); if (!name.trim() || !sync || busy) return;
     setBusy(true);
     try { await joinAs(l.record.id, { name, standpoint: qOnly ? '' : standpoint, questionerOnly: qOnly, syncMode: sync }); go(debateHref(l.record.id), true); }
     catch (err) { showToast(t('common.error', { msg: (err as Error).message })); setBusy(false); }
@@ -47,7 +47,7 @@ export function Join({ l }: { l: Loaded }) {
           )}
           <SyncChoice value={sync} onChange={setSync} />
           <p class="muted small">{t('join.existingNote')}</p>
-          <button type="submit" class="btn primary block" disabled={!name.trim() || busy}>{t('join.go')}</button>
+          <button type="submit" class="btn primary block" disabled={!name.trim() || !sync || busy}>{t('join.go')}</button>
           <a class="btn ghost block" href={debateHref(l.record.id)}>{t('join.readOnly')}</a>
         </form>
         <details class="panel"><summary>{t('join.charter')}</summary><Charter /></details>

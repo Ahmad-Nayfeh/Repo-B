@@ -1,6 +1,7 @@
 // Pure derivation: events → debate state (PRD §3.4). Deterministic: the same event SET gives
 // the same state on every device, whatever the arrival order.
 import { isValidChild, type ParentView } from './rules';
+import { isWellFormedEvent } from './validate';
 import {
   ANSWERS, ASSERTIONS, CHALLENGES,
   type AssertionInfo, type ChallengeInfo, type DNode, type DebateEvent, type DebateState,
@@ -13,7 +14,8 @@ export const cmp = (a: { at: number; id: string }, b: { at: number; id: string }
 type AddEvent = Extract<DebateEvent, { type: 'node.add' }>;
 
 export function derive(debateId: string, events: Iterable<DebateEvent>): DebateState {
-  const evs = [...events].filter((e) => e.debateId === debateId).sort(cmp);
+  // malformed events are skipped, never thrown on (security review S2)
+  const evs = [...events].filter((e) => isWellFormedEvent(e, false) && e.debateId === debateId).sort(cmp);
   const state: DebateState = {
     id: debateId, title: '', createdBy: null, lang: 'ar',
     people: new Map(), nodes: new Map(), roots: [],
@@ -23,17 +25,14 @@ export function derive(debateId: string, events: Iterable<DebateEvent>): DebateS
 
   // 1. debate + people ------------------------------------------------------------
   let titleAt = -Infinity;
-  const nameCounts = new Map<string, number>();
   for (const e of evs) {
     if (e.type === 'debate.create' && state.createdBy === null) {
       state.createdBy = e.authorId; state.title = e.title; state.lang = e.lang; titleAt = e.at;
     } else if (e.type === 'person.join') {
       if (state.people.has(e.authorId)) { state.ignored++; continue; }
       const raw = e.name.trim().slice(0, 40) || '?';
-      const n = (nameCounts.get(raw) ?? 0) + 1;
-      nameCounts.set(raw, n);
       state.people.set(e.authorId, {
-        id: e.authorId, rawName: raw, name: n === 1 ? raw : `${raw} ${n}`, pub: e.pub,
+        id: e.authorId, rawName: raw, name: raw, pub: e.pub,
         joinedAt: e.at, joinOrder: state.people.size, questionerOnly: !!e.questionerOnly, active: false,
       });
     }
@@ -45,7 +44,7 @@ export function derive(debateId: string, events: Iterable<DebateEvent>): DebateS
       if (p) { p.rawName = e.name.trim().slice(0, 40) || p.rawName; p.name = p.rawName; }
     }
   }
-  if (evs.some((e) => e.type === 'person.rename')) renumberNames(state.people);
+  disambiguateNames(state.people);
 
   // 2. nodes, validated parent-first ------------------------------------------------
   const adds = new Map<string, AddEvent>();
@@ -108,12 +107,12 @@ export function derive(debateId: string, events: Iterable<DebateEvent>): DebateS
   return state;
 }
 
-function renumberNames(people: Map<string, Person>) {
-  const seen = new Map<string, number>();
-  for (const p of [...people.values()].sort((a, b) => a.joinOrder - b.joinOrder)) {
-    const n = (seen.get(p.rawName) ?? 0) + 1; seen.set(p.rawName, n);
-    p.name = n === 1 ? p.rawName : `${p.rawName} ${n}`;
-  }
+/** People sharing a display name are ALL marked with a short key fingerprint, so nobody gains the
+ *  plain name by joining first or backdating (security review S5). */
+function disambiguateNames(people: Map<string, Person>) {
+  const count = new Map<string, number>();
+  for (const p of people.values()) count.set(p.rawName, (count.get(p.rawName) ?? 0) + 1);
+  for (const p of people.values()) p.name = (count.get(p.rawName) ?? 0) > 1 ? `${p.rawName} ·${p.id.slice(0, 4)}` : p.rawName;
 }
 
 // ---------------------------------------------------------------------------------
