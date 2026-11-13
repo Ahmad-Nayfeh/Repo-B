@@ -27,7 +27,7 @@ export function SyncTab({ l }: { l: Loaded }) {
   const exportPlain = async () => { if (!confirm(t('sync.exportPlainWarn'))) return; const f = plainExport(); await shareFile(f.name, f.text, 'application/json'); };
   const importF = async () => {
     const text = await readFileText('.txt,text/plain'); if (!text) return;
-    try { const res = await importFileText(text); showToast(t('sync.imported', { n: res.added })); }
+    try { const res = await importFileText(text); if (res.added > 0) showToast(t('sync.imported', { n: res.added })); }
     catch (e) { showToast(errorText((e as Error).message)); }
   };
   const shareIdentity = async () => {

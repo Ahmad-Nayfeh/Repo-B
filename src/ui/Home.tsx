@@ -19,7 +19,7 @@ export function Home() {
   const importFile = async () => {
     const text = await readFileText('.txt,text/plain');
     if (!text) return;
-    try { const r = await importFileText(text); showToast(t('sync.imported', { n: r.added })); go(debateHref(r.debateId)); }
+    try { const r = await importFileText(text); if (r.added > 0) showToast(t('sync.imported', { n: r.added })); go(debateHref(r.debateId)); }
     catch (e) { showToast(errorText((e as Error).message)); }
   };
   return (

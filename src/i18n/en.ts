@@ -98,6 +98,7 @@ export const en: Record<StringKey, string> = {
   'debate.yourMove': 'Your move',
   'debate.owesN': 'owes: {n}',
   'debate.moveN': 'their move: {n}',
+  'debate.moreOnPoint': '+{n} more on the same point',
   'debate.moveOf': '{name}\'s move',
   'debate.nothingWaiting': 'Nothing is waiting on you.',
   'debate.newSince': 'New since your last visit',

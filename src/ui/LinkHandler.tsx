@@ -25,7 +25,7 @@ export function LinkHandler({ raw }: { raw: string }) {
           go(rec?.identity ? debateHref(id) : debateHref(id, 'join'), true);
         } else if (p.kind === 'update') {
           const n = await acceptUpdatePayload(p.debateId, p.payload);
-          showToast(t('sync.imported', { n }));
+          if (n > 0) showToast(t('sync.imported', { n }));
           go(debateHref(p.debateId), true);
         } else {
           const name = await acceptIdentityPayload(p.debateId, p.payload, (nm) => confirm(t('sync.identityConfirm', { name: nm })));

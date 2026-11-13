@@ -9,7 +9,9 @@ The deploy workflow cannot switch Pages on by itself: GitHub's `configure-pages`
 1. Open https://github.com/Ahmad-Nayfeh/Repo-B/settings/pages
 2. Under **Build and deployment → Source**, choose **GitHub Actions**.
 3. Open https://github.com/Ahmad-Nayfeh/Repo-B/actions , click the workflow **Deploy to GitHub Pages**, then **Run workflow** (branch: `claude/new-session-1cdurq`).
-4. When it turns green, the site is at **https://ahmad-nayfeh.github.io/Repo-B/**
+4. When the **deploy** job turns green, the site is at **https://ahmad-nayfeh.github.io/Repo-B/**
+
+> ⚠️ Until step 2 is done, the workflow still shows green (it builds and tests, then skips the deploy with a notice "GitHub Pages is not enabled yet"). **A green run does not mean the site is live** — check that the "deploy" job actually ran.
 
 If step 3 fails with an "environment protection" message: Settings → Environments → `github-pages` → Deployment branches → add `claude/new-session-1cdurq` (or "All branches"), then re-run.
 

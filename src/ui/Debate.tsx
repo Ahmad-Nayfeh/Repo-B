@@ -111,6 +111,7 @@ function StatusTab({ l }: { l: Loaded }) {
                 <a class={`wait-item ${it.kind}`} href={debateHref(l.record.id, 't', it.focus)}>
                   <StatusChip tone={it.kind === 'owe' ? 'owe' : 'move'} text={it.kind === 'owe' ? t('debate.youOwe') : t('debate.yourMove')} />
                   <span class="wait-text" dir="auto">{excerpt(it.text, 110)}</span>
+                  {!!it.more && <span class="pill pill-owe">{t('debate.moreOnPoint', { n: it.more })}</span>}
                   <span class="muted small">{personName(s, it.by, l.me)} · {ago(it.at)}</span>
                 </a>
               </li>
@@ -128,7 +129,8 @@ function StatusTab({ l }: { l: Loaded }) {
               <li key={n.id}>
                 <a class="fresh-item" href={debateHref(l.record.id, 't', n.id)}>
                   <span class="move-badge">{moveLabel(n.move)}</span>
-                  <span dir="auto">{n.text ? excerpt(n.text, 100) : t('stance.on', { text: excerpt(n.parentId ? s.nodes.get(n.parentId)?.text ?? '' : '', 80) })}</span>
+                  {(n.move === 'concede' || n.move === 'withdraw' || n.move === 'agree_disagree') && <span class="muted small" dir="auto">{t('stance.on', { text: excerpt(n.parentId ? s.nodes.get(n.parentId)?.text ?? '' : '', 80) })}</span>}
+                  {n.text && <span dir="auto">{excerpt(n.text, 100)}</span>}
                   <span class="muted small">{personName(s, n.authorId, l.me)} · {ago(n.at)}</span>
                 </a>
               </li>
@@ -177,7 +179,7 @@ function StatusTab({ l }: { l: Loaded }) {
   );
 }
 
-interface WaitItem { key: string; kind: 'owe' | 'move'; focus: string; text: string; by: string; at: number }
+interface WaitItem { key: string; kind: 'owe' | 'move'; focus: string; text: string; by: string; at: number; more?: number }
 function waitingItems(s: DebateState, me: string | null): WaitItem[] {
   if (!me) return [];
   const ob = obligationOf(s, me);
@@ -185,7 +187,7 @@ function waitingItems(s: DebateState, me: string | null): WaitItem[] {
   for (const targetId of ob.owes) {
     const open = s.nodes.get(targetId)!.children.map((c) => s.nodes.get(c)!).filter((c) => s.challenges.get(c.id)?.state === 'open');
     const first = open[0]; if (!first) continue;
-    out.push({ key: `o${targetId}`, kind: 'owe', focus: open.length === 1 ? first.id : targetId, text: first.text, by: first.authorId, at: first.at });
+    out.push({ key: `o${targetId}`, kind: 'owe', focus: open.length === 1 ? first.id : targetId, text: first.text, by: first.authorId, at: first.at, more: open.length - 1 });
   }
   for (const cid of ob.yourMove) {
     const ch = s.challenges.get(cid)!;
@@ -311,7 +313,7 @@ export function NodeCard({ l, n, focused, onReply }: { l: Loaded; n: DNode; focu
         <span class="muted small">{ago(n.at)}</span>
       </div>
       {n.text && <p class={`card-text ${focused ? '' : 'clamp'}`} dir="auto">{n.text}</p>}
-      {!n.text && n.parentId && <p class="muted small" dir="auto">{t('stance.on', { text: excerpt(s.nodes.get(n.parentId)?.text || moveLabel(s.nodes.get(n.parentId)!.move), 90) })}</p>}
+      {(n.move === 'concede' || n.move === 'withdraw' || n.move === 'agree_disagree') && n.parentId && <p class="muted small" dir="auto">{t('stance.on', { text: excerpt(s.nodes.get(n.parentId)?.text || moveLabel(s.nodes.get(n.parentId)!.move), 90) })}</p>}
       {n.meta.origin === 'citation' && <p class="muted small">{t('compose.citation')}</p>}
       {n.meta.witness && <p class="muted small">{t(`compose.witness.${n.meta.witness}`)}</p>}
       {ref && <p class="small">→ <a href={debateHref(l.record.id, 't', ref.id)} dir="auto">{excerpt(ref.text, 60)}</a></p>}

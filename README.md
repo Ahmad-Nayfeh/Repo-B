@@ -48,7 +48,7 @@
 | 📜 **حركات آداب البحث والمناظرة** | الاستفسار، والمنع وطلب الدليل، والمنع مع السند، والنقض بشاهد، والمعارضة، وطلب تصحيح النقل، وتحرير المراد، والتسليم. |
 | 📖 **المصطلحات** | تعريفات متفق عليها أو محل خلاف، ومرجع موثّق للمغالطات والمفاهيم المسمّاة — يُسأل عنها سؤالاً لا اتهاماً. |
 | ⚖️ **لا يحكم لأحد** | لا نقاط ولا تصويت ولا «فائز». الأداة تنظّم الحوار فقط. |
-| 🔒 **خاص افتراضياً** | لا حسابات، ولا إحصاءات، ولا متتبّعات. المناظرة على جهازك ومشفّرة طرفاً لطرف، والمفتاح في رابط الدعوة فقط. |
+| 🔒 **خاص افتراضياً** | لا حسابات، ولا إحصاءات، ولا متتبّعات. المناظرة محفوظة على جهازك، وكل ما يخرج منه مشفّر طرفاً لطرف، والمفتاح في رابط الدعوة فقط. (المحفوظ على الجهاز نفسه غير مشفّر.) |
 | 📱 **للهاتف أولاً** | عربي أولاً مع الإنجليزية، يعمل دون اتصال بعد أول زيارة، ويُثبَّت على الشاشة الرئيسية. |
 | 💸 **مجاني بالكامل** | لا خادم خاص، ولا اشتراكات، ولا إعلانات. |
 
@@ -73,7 +73,7 @@ Long debates — about faith, God's existence, the authority of reason — happe
 | 📜 **Classical disputation moves** | From *ādāb al-baḥth wa-l-munāẓara*: clarification, denial / request for proof, objection with a ground, refutation with a witness, counter-argument, authenticate the citation, clarify meaning, concession. |
 | 📖 **Terms** | Agreed or disputed definitions, plus a sourced reference of named fallacies and concepts — raised as questions, never accusations. |
 | ⚖️ **Never judges** | No scores, votes or "winner". The tool structures; people decide. |
-| 🔒 **Private by default** | No accounts, analytics or trackers. The debate lives on your device, end-to-end encrypted; the key exists only in the invite link. |
+| 🔒 **Private by default** | No accounts, analytics or trackers. The debate lives on your device; everything that leaves it is end-to-end encrypted, and the key exists only in the invite link. (Data stored on the device itself is not encrypted.) |
 | 📱 **Mobile-first** | Arabic-first with English, offline after the first visit, installable. |
 | 💸 **Free** | No server of ours, no subscriptions, no ads. |
 
@@ -167,8 +167,8 @@ No analytics · no trackers · no third-party scripts or fonts · `noindex` · s
 | Independent reviews | research, design, security (12 findings), hands-on QA (12 findings) — all resolved: [`docs/qa/`](docs/qa) |
 | Manual mode network isolation | 0 requests to other hosts |
 | Accessibility (axe, WCAG 2.2 AA tags, light + dark) | 0 serious/critical violations |
-| 300-point debate, 4× CPU throttle | status 478 ms, LCP 440 ms |
-| First-load JavaScript | ≈ 40 KiB gzip |
+| 300-point debate, 4× CPU throttle (local server; machine-dependent) | status ≈ 0.5 s, LCP ≈ 0.4 s |
+| First-load JavaScript | ≈ 42 KiB gzip (budget 150) |
 
 ---
 

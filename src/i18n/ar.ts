@@ -97,6 +97,7 @@ export const ar = {
   'debate.yourMove': 'دورك',
   'debate.owesN': 'عليه الرد: {n}',
   'debate.moveN': 'دوره: {n}',
+  'debate.moreOnPoint': 'وسؤال/اعتراض آخر على النقطة نفسها: {n}',
   'debate.moveOf': 'دور {name}',
   'debate.nothingWaiting': 'لا شيء ينتظرك الآن.',
   'debate.newSince': 'جديد منذ زيارتك',

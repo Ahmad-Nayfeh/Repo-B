@@ -51,7 +51,11 @@ test('a 300-point debate stays fast and navigable on a throttled phone', async (
   for (let i = 0; i < 6; i++) {
     const next = A.page.locator('a.card').first();
     if (!(await next.count())) break;
-    t1 = Date.now(); await next.click(); await expect(A.page.locator('article.card.focused')).toBeVisible(); depthSteps.push(Date.now() - t1);
+    const href = (await next.getAttribute('href'))!;
+    const target = decodeURIComponent(href.split('/').pop()!);
+    t1 = Date.now(); await next.click();
+    await expect.poll(() => decodeURIComponent(A.page.url())).toContain(`/t/${target}`); // navigation finished
+    await expect(A.page.locator('article.card.focused')).toBeVisible(); depthSteps.push(Date.now() - t1);
   }
   t1 = Date.now();
   await A.page.locator('article.card.focused').getByRole('button', { name: 'ردّ' }).click();
