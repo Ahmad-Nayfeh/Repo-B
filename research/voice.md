@@ -130,7 +130,7 @@ This is the most honest free and private option, because the processing happens 
 - Launched Nov 2024. WhatsApp says transcripts are "generated on your device and no one else can read them" [VOICE-24].
 - At launch, Arabic was supported on **iOS 16+**, and Android had only English, Portuguese, Spanish and Russian [VOICE-24].
 - By **Sept 2026**, WABetaInfo reports that Android already supported **Arabic**, Spanish, Hindi, Portuguese and Russian, using downloaded language packs that work offline [VOICE-23].
-- WhatsApp's help page only says the feature "is only available on certain devices" [VOICE-25-note: see VOICE-23/24; official FAQ text not retrievable].
+- WhatsApp's own help page only says the feature "is only available on certain devices"; its full text, including the language list, could not be retrieved [VOICE-32].
 - **Workflow:** long-press the voice note, tap Transcribe, copy the text, and paste it into our turn field. This is zero cost, the audio stays in WhatsApp, and transcription is on-device per WhatsApp's claims.
 
 **iOS keyboard dictation.**
@@ -153,7 +153,7 @@ This is the most honest free and private option, because the processing happens 
 **v1 (ship now): text-first, with "speak instead of typing" guidance.**
 
 1. Turns are text. Each turn field is a large RTL `<textarea dir="auto" lang="ar">` that works well with keyboard dictation, and its autosave survives the keyboard opening and closing.
-2. Add a short "🎙 Prefer to speak?" help sheet:
+2. Add a short "Prefer to speak?" help sheet:
    - **iPhone:** tap the mic on the keyboard. Arabic dictation can run on your phone.
    - **Android:** tap the mic on Gboard. This may use Google's servers; test with airplane mode to check.
    - **Already sent a voice note in WhatsApp?** Long-press it, tap Transcribe, then copy the text and paste it here.
@@ -237,7 +237,7 @@ This is the most honest free and private option, because the processing happens 
 
 **[VOICE-24]** "WhatsApp rolls out voice message transcripts" — TechCrunch, 21 Nov 2024 — https://techcrunch.com/2024/11/21/whatsapp-rolls-out-voice-message-transcripts — "generated on your device"; Arabic on iOS 16+ at launch; Android launch languages.
 
-**[VOICE-25]** "Google's Gboard now offers offline speech recognition" — Digital Trends, 12 Mar 2019 — https://www.digitaltrends.com/phones/google-gboard-offline-speech-recognition/ — Offline recognition launched for US English on Pixel; 80 MB model. *(Note: an inline marker in section 5 also says "VOICE-25-note"; the WhatsApp FAQ at https://faq.whatsapp.com/241617298315321 only states transcripts are "only available on certain devices"; its full text was not retrievable.)*
+**[VOICE-25]** "Google's Gboard now offers offline speech recognition" — Digital Trends, 12 Mar 2019 — https://www.digitaltrends.com/phones/google-gboard-offline-speech-recognition/ — Offline recognition launched for US English on Pixel; 80 MB model.
 
 **[VOICE-26]** Type with your voice (Gboard Help) — Google, accessed Nov 2026 — https://support.google.com/gboard/answer/2781851?hl=en — "Talk-to-text doesn't work with all languages"; no statement on offline use or where audio is processed.
 
@@ -250,3 +250,5 @@ This is the most honest free and private option, because the processing happens 
 **[VOICE-30]** Receiving shared data with the Web Share Target API — Chrome for Developers, accessed Nov 2026 — https://developer.chrome.com/docs/capabilities/web-apis/web-share-target — Chrome 76+ Android / 89+ desktop; app must be installed; files accepted via POST multipart; iOS not mentioned.
 
 **[VOICE-31]** Audio messages — WhatsApp Business Platform (Meta for Developers), accessed Nov 2026 — https://developers.facebook.com/documentation/business-messaging/whatsapp/messages/audio-messages — Voice messages require `.ogg` files with the OPUS codec, mono; 16 MB limit.
+
+**[VOICE-32]** Voice message transcripts (WhatsApp Help Center) — WhatsApp, accessed Nov 2026 — https://faq.whatsapp.com/241617298315321 — Only the line "only available on certain devices and may not be available to you yet" was retrievable; no language list was visible.
