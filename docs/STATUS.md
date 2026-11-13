@@ -2,7 +2,7 @@
 
 > First file any session reads. Kept current at all times.
 
-**Current phase:** Phase 1 — exit review of `research/SYNTHESIS.md` in progress
+**Current phase:** Phase 2 — organisation (department charters)
 **Last updated:** 2026-11-13
 
 ## Done
@@ -12,7 +12,7 @@
 - `research/SYNTHESIS.md` drafted.
 
 ## In progress
-- Independent fresh-context review of SYNTHESIS (output: `research/REVIEW-synthesis.md`). Fix findings, then exit Phase 1.
+- Phase 1 exit PASSED: independent review (`research/REVIEW-synthesis.md`), all 17 findings resolved (SYNTHESIS §10).
 
 ## Next
 - Phase 2: department charters in `docs/org/`.

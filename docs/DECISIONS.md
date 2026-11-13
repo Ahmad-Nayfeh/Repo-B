@@ -29,3 +29,19 @@ Each entry: date, decision, reasoning, alternatives rejected, how to reverse.
 - **Evidence:** `research/voice.md`. No free, private, in-browser Arabic speech-to-text is usable on mid-range phones today.
 - **Rejected:** Web Speech API (sends audio to Google/Apple on phones); in-browser Whisper (weak Arabic accuracy at phone-sized models, large downloads).
 - **Reverse:** a future opt-in on-device transcription tool, with explicit consent.
+
+## D-006 · 2026-11-13 · Obligations are symmetric: "owes a reply" and "your move" (changes D-003)
+- **What changed:** "who owes a reply" is no longer the classical claimant-only burden alone. Both people's standpoints are recorded at the start (mixed dispute), and the app shows two equally prominent signals for both people: *owes a reply* (burden) and *your move* (your challenge was answered).
+- **Evidence:** independent review finding F1 (`research/REVIEW-synthesis.md`): a claimant-only count silently favours whoever frames his side as doubt — a hidden verdict that breaks the "never judge" rule.
+- **Rejected:** classical one-directional burden as the only signal.
+
+## D-007 · 2026-11-13 · Per-device signing keys; explicit sync-mode consent (changes D-004)
+- **What changed:** relay events are signed with per-device keys, not a key derived from the link; the user chooses "public relays (encrypted)" or "manual only" on a clear screen when creating/joining.
+- **Evidence:** review findings F2 (a shared key lets any link holder trigger NIP-09/NIP-62 deletion of all relay copies), F3 (opt-out is not "clear about where data is stored").
+
+## D-008 · 2026-11-13 · Two-tier move set, type correctable later (refines D-003)
+- **What changed:** a short everyday menu in plain Arabic (classical move underneath), finer classical moves under "more"; a reply's author can re-type it later.
+- **Evidence:** review F6; cognitive-load findings (`argumentation-theory.md` §2, §8); vocabulary friction in Kialo Edu study (`existing-tools.md`).
+
+## D-009 · 2026-11-13 · Phase 1 exit passed
+- Independent review found 2 Critical, 6 Important, 9 Minor issues; all resolved in `research/SYNTHESIS.md` §10. Six key sources were spot-checked by the reviewer and confirmed.
