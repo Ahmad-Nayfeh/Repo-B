@@ -38,8 +38,13 @@ export function nodeChip(s: DebateState, n: DNode, me: string | null): Chip | nu
       case 'accepted': return { tone: 'accepted', text: t('status.accepted') };
       case 'standing': return { tone: 'neutral', text: t('status.standing') };
       case 'under_discussion': {
-        const mine = me && a.awaiting.includes(me);
-        return { tone: mine ? 'owe' : 'open', text: t('status.under_discussion') };
+        // say who is awaited: an open challenge (someone owes) takes precedence over "your move"
+        const chs = n.children.map((c) => s.challenges.get(c)).filter((c) => !!c);
+        const owing = chs.find((c) => c!.state === 'open' && c!.owes);
+        const moving = chs.find((c) => (c!.state === 'answered' || c!.state === 'proposal') && c!.yourMove);
+        if (owing) return { tone: owing.owes === me ? 'owe' : 'open', text: `${t('status.under_discussion')} — ${t('ch.open', { name: personName(s, owing.owes, me) })}` };
+        if (moving) return { tone: moving.yourMove === me ? 'move' : 'open', text: `${t('status.under_discussion')} — ${t('debate.moveOf', { name: personName(s, moving.yourMove, me) })}` };
+        return { tone: 'open', text: t('status.under_discussion') };
       }
     }
   }

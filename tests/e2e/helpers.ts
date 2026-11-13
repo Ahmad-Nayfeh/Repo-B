@@ -49,8 +49,7 @@ export async function join(page: Page, url: string, o: { name: string; claim?: s
 
 /** Opens the tree, taps the card whose text contains `text`, opens the composer, picks `action`, writes, sends. */
 export async function reply(page: Page, onText: string, action: string, text?: string) {
-  await page.getByRole('tab', { name: 'الشجرة' }).click();
-  await page.locator('a.card', { hasText: onText }).first().click();
+  await focusOn(page, onText);
   await page.locator('article.card.focused').getByRole('button', { name: 'ردّ' }).click();
   const sheet = page.locator('dialog.sheet[open]');
   const btn = sheet.getByRole('button', { name: action, exact: true });
@@ -66,4 +65,12 @@ export async function sendUpdate(page: Page): Promise<string> {
   await page.evaluate(() => navigator.clipboard.writeText(''));
   await page.getByRole('button', { name: 'أرسل تحديثاً' }).first().click();
   return clipboardUrl(page);
+}
+
+/** Focuses the point whose text contains `text`, using the app's own search (works at any depth). */
+export async function focusOn(page: Page, text: string) {
+  await page.getByRole('tab', { name: 'الحالة' }).click();
+  await page.locator('#search').fill(text);
+  await page.locator('section a.fresh-item', { hasText: text }).last().click();
+  await expect(page.locator('article.card.focused', { hasText: text })).toBeVisible();
 }
