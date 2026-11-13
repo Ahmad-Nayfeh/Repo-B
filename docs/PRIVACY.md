@@ -14,6 +14,8 @@ The same text is shown in the app under «عن الموقع والخصوصية»
 
 **Manual mode** makes no network requests except loading the site itself (verified in the end-to-end tests: zero requests to other hosts).
 
+**Integrity:** every point is signed by its author's key; event ids are content hashes; a debate id is bound to its creator; malformed or unverifiable data is dropped on arrival. Only the encrypted backup (`.txt`) can be imported — plain JSON is export-only.
+
 **Limits we state plainly**
 - A sent invite link cannot be revoked. Moving to a new link (re-key) is on the roadmap.
 - Anyone with the invite link can join as a *new* participant. They cannot write as an existing participant: every point is signed with its author's key.
