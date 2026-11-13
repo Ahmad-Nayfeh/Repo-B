@@ -1,0 +1,47 @@
+// Small reference library of named concepts and fallacies (PRD §6, v1-should).
+// Definitions are condensed from research/argumentation-theory.md §9 and research/munazara.md;
+// `source` is the bibliography ID in research/SOURCES.md. Arabic names follow common Arabic
+// usage in logic/critical-thinking writing (rendering choices by the team, not a cited source).
+export interface LibEntry { id: string; ar: string; en: string; defAr: string; defEn: string; source: string }
+
+export const LIBRARY: LibEntry[] = [
+  { id: 'begging', ar: 'المصادرة على المطلوب', en: 'Begging the question', source: 'ARG-19; MUN-01',
+    defAr: 'أن تُجعل النتيجةُ المطلوبُ إثباتُها مقدمةً في الدليل، ولو بلفظ آخر.',
+    defEn: 'The premise restates the conclusion, or assumes the very point in dispute without argument.' },
+  { id: 'equivocation', ar: 'المغالطة بالاشتراك اللفظي', en: 'Equivocation', source: 'ARG-19',
+    defAr: 'استعمال اللفظ الواحد بمعنيين مختلفين في موضعين من الدليل، فينقطع اتصال الاستدلال.',
+    defEn: 'A term is used with two different meanings in the same argument, so the reasoning loses continuity.' },
+  { id: 'strawman', ar: 'مغالطة رجل القش', en: 'Straw man', source: 'ARG-19',
+    defAr: 'تحريف قول المخالف إلى صورة أضعف ثم إبطالها على أنها قوله.',
+    defEn: 'Distorting the other view into an easier target and treating the original as refuted.' },
+  { id: 'adhominem', ar: 'الشخصنة', en: 'Ad hominem', source: 'ARG-19',
+    defAr: 'مهاجمة القائل بدل القول. وقد يكون مشروعاً أحياناً، كبيان تناقض المخالف مع التزاماته هو.',
+    defEn: 'Attacking the arguer instead of the argument; sometimes legitimate, e.g. pointing out an inconsistency in their own commitments.' },
+  { id: 'ignorance', ar: 'الاحتجاج بالجهل', en: 'Argument from ignorance', source: 'ARG-19',
+    defAr: 'الحكم بصدق دعوى لعدم الدليل على كذبها، أو بكذبها لعدم الدليل على صدقها.',
+    defEn: 'Inferring a claim is true because nothing shows it false, or false because nothing shows it true.' },
+  { id: 'burden', ar: 'نقل عبء الإثبات', en: 'Shifting the burden of proof', source: 'ARG-19; ARG-18',
+    defAr: 'أن يمتنع المدّعي عن الدليل على دعواه، أو يطالب مخالفه بنفيها بدلاً من إثباتها هو.',
+    defEn: 'Refusing to defend one\'s own standpoint, or demanding that the other side disprove it.' },
+  { id: 'authority', ar: 'الاحتكام إلى سلطة في غير اختصاصها', en: 'Appeal to (misplaced) authority', source: 'ARG-19; ARG-09',
+    defAr: 'الاستدلال بقول من ليس مختصاً في المسألة المتنازع فيها، أو دون التحقق من شروط قبول قوله.',
+    defEn: 'A misapplied argument from expert opinion, e.g. when the source is not an expert in the relevant field.' },
+  { id: 'complexq', ar: 'السؤال المركّب', en: 'Complex question', source: 'ARG-23; ARG-19',
+    defAr: 'سؤال يفترض أمراً لم يسلّمه المسؤول.',
+    defEn: 'A question that presupposes something the other person has not granted.' },
+  { id: 'genetic', ar: 'مغالطة المنشأ', en: 'Genetic fallacy', source: 'ARG-37',
+    defAr: 'الحكم على الدعوى بالصدق أو الكذب بالنظر إلى مصدرها أو نشأتها لا إلى دليلها.',
+    defEn: 'Judging a claim true or false by its origin rather than its justification.' },
+  { id: 'necsuff', ar: 'الشرط اللازم والشرط الكافي', en: 'Necessary vs sufficient condition', source: 'ARG-33',
+    defAr: 'اللازم: ما لا يتحقق الأمر بدونه. الكافي: ما يكفي وجوده لتحقق الأمر.',
+    defEn: 'B is necessary for A if A cannot hold without B; A is sufficient for B if A guarantees B.' },
+  { id: 'epiont', ar: 'الدعوى المعرفية والدعوى الوجودية', en: 'Epistemic vs ontological claim', source: 'ARG-34; ARG-35',
+    defAr: 'الوجودية تقول ما هو موجود («الله موجود»)، والمعرفية تقول ما نعلمه أو يحق لنا اعتقاده («الإيمان بالله مسوَّغ دون برهان»). الخلط بينهما من أسباب الحوار المتقاطع.',
+    defEn: 'Ontological claims are about what exists ("God exists"); epistemic claims are about what we know or are justified in believing. Mixing them causes cross-purpose exchanges.' },
+  { id: 'dawr', ar: 'الدور', en: 'Circularity (dawr)', source: 'MUN-01',
+    defAr: 'توقّف الشيء على ما يتوقف عليه؛ وهو من صور استلزام المحال التي يُنقض بها الدليل.',
+    defEn: 'A depends on what depends on A; one form of "entailing an impossibility" used to refute a proof.' },
+  { id: 'tasalsul', ar: 'التسلسل', en: 'Infinite regress (tasalsul)', source: 'MUN-01',
+    defAr: 'ترتّب أمور لا إلى نهاية؛ ومن صور استلزام المحال في النقض.',
+    defEn: 'An endless chain of dependencies; another form of "entailing an impossibility" in refutation.' },
+];

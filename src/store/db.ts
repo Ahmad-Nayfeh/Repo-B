@@ -17,7 +17,8 @@ export interface DebateRecord {
   lastBackupAt?: number;
   lastExportAt?: number;       // for manual delta updates
   bannerSeen?: boolean;
-  relayCursor?: number;        // newest relay created_at seen
+  nostrSk?: string;            // per-device Nostr signing key (hex), never derived from the link
+  relayPublished?: string[];   // my event ids acknowledged by ≥ 2 relays
 }
 
 export interface Settings { lang: 'ar' | 'en'; digits: 'arab' | 'latn'; hideTitles: boolean; hintsSeen: string[] }
