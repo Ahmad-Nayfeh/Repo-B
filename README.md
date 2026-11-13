@@ -162,8 +162,9 @@ No analytics · no trackers · no third-party scripts or fonts · `noindex` · s
 
 | Check | Result |
 |---|---|
-| Unit tests (model, fairness fixtures, crypto, links, storage, i18n) | 41 passing |
-| End-to-end (two people on two phones, relay sync via mock relays, offline, accessibility, 300-point debate) | passing in CI |
+| Unit tests (model, fairness & QA fixtures, crypto, security regressions, links, storage, i18n) | 48 passing |
+| End-to-end (two people on two phones, relay sync via mock relays, offline, accessibility, 300-point debate, identity transfer, forged-invite refusal) | 9 passing |
+| Independent reviews | research, design, security (12 findings), hands-on QA (12 findings) — all resolved: [`docs/qa/`](docs/qa) |
 | Manual mode network isolation | 0 requests to other hosts |
 | Accessibility (axe, WCAG 2.2 AA tags, light + dark) | 0 serious/critical violations |
 | 300-point debate, 4× CPU throttle | status 478 ms, LCP 440 ms |
