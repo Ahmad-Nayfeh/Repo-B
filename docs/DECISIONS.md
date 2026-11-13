@@ -50,3 +50,10 @@ Each entry: date, decision, reasoning, alternatives rejected, how to reverse.
 - **Decision:** Argumentation & Domain; Product & UX (incl. visual); Arabic Language & Localisation; Engineering; Privacy & Security; QC (incl. testing); QA & Release. Charters in `docs/org/`.
 - **Reasoning:** each maps to a distinct failure mode found in research (model fidelity/fairness; mobile usability; Arabic-first; feasibility; privacy; conformance; usefulness).
 - **Rejected:** separate R&D, Visual Design, Testing, Release departments (merged; see `docs/org/README.md`). Merging keeps gates real instead of theatrical for a one-lead team.
+
+## D-011 · 2026-11-13 · Design choices in PRD/ARCHITECTURE (Phase 3)
+- **Single reply tree; statuses and obligations computed, never stored.** Reason: one source of truth; merge stays a trivial set union. Rejected: stored status fields (conflicts across devices).
+- **Key in link used once, then URL rewritten to `#/d/<id>`.** Reason: the secret should not sit in the address bar/history. Reversible.
+- **v1 identity is self-declared per debate; no per-person signatures.** Reason: every link holder can already write (trust model = link); signatures add key-transfer UX across devices for little v1 gain. Disclosed in privacy note; ROADMAP item. Rejected for v1: per-person ECDSA keys with transfer links.
+- **Preact + signals, no CRDT, @noble crypto only.** Reason: JS budget ≤ 150 KiB gzip (SYN §5). Rejected: React (size), Automerge (size), Yjs (unneeded).
+- **Nostr transport lazy-loaded; tests use a local mock relay only.** Reason: first-load budget; tests must never write to public relays.
